@@ -1,30 +1,41 @@
 package main
 
 import (
-  "fmt"
-  "blog/internal/config"
-  "log"
+	"blog/internal/config"
+	"fmt"
+	"log"
+	"os"
 )
 
 func main() {
-  if err := run(); err != nil {
-    log.Fatalf("Application error: %w", err)
-  }
-}
+	fmt.Println("HELLLO FROM MAIN")
+	configStruct := &config.Config{}
 
-func run () error {
-  c, err := config.Read()
-  if err != nil {
-    log.Fatalf("Error reading config: %v", err)
-  }
-  fmt.Printf("Config: %+v\n",c)
+	stateInstance := &config.State{
+		Config: configStruct,
+	}
 
-  newUserName := "Glen"
-  err = c.SetUser(newUserName)
-  if err != nil {
-    log.Fatalf("Error setting new username: %v", err)
-  }
+	commands := &config.Commands{
+		Handlers: make(map[string]func(*config.State, config.Command) error),
+	}
 
-  fmt.Printf("Config: %+v\n", c)
-  return nil
+	commands.Register("login", config.HandlerLogin)
+	if len(os.Args) < 2 {
+		log.Fatalf("Command name is required")
+	}
+
+	cmdName := os.Args[1]
+	args := os.Args[2:]
+
+	cmd := config.Command{
+		Name: cmdName,
+		Args: args,
+	}
+
+	err := commands.Run(stateInstance, cmd)
+	if err != nil {
+		log.Fatalf("Error running command: %v", err)
+	}
+
+	configStruct.Read()
 }
