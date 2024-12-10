@@ -10,6 +10,16 @@ import (
 	"github.com/google/uuid"
 )
 
+func handleReset(s *state, cmd command) error {
+	err := s.db.ClearData(context.Background())
+	if err != nil {
+		return fmt.Errorf("Data could not be cleared: %w", err)
+	}
+
+	fmt.Println("Success deleting all data from the users table")
+	return nil
+}
+
 func handlerLogin(s *state, cmd command) error {
 	if len(cmd.Args) != 1 {
 		return fmt.Errorf("There is no arguments provided")
@@ -30,26 +40,32 @@ func handlerLogin(s *state, cmd command) error {
 
 func handleRegister(s *state, cmd command) error {
 	if len(cmd.Args) != 1 {
-		return fmt.Errorf("A name needs to be passed as an arg")
+		return fmt.Errorf("usage: %v <name>", cmd.Name)
 	}
-	userParams := database.CreateUserParams{
+
+	name := cmd.Args[0]
+
+	user, err := s.db.CreateUser(context.Background(), database.CreateUserParams{
 		ID:        uuid.New(),
 		CreatedAt: time.Now().UTC(),
 		UpdatedAt: time.Now().UTC(),
-		Name:      cmd.Args[0],
-	}
-	user, err := s.db.CreateUser(context.Background(), userParams)
+		Name:      name,
+	})
 	if err != nil {
 		return fmt.Errorf("couldn't create user: %w", err)
 	}
 
 	err = s.config.SetUser(user.Name)
 	if err != nil {
-		return fmt.Errorf("Error while setting user: %w", err)
+		return fmt.Errorf("couldn't set current user: %w", err)
 	}
 
-	fmt.Printf("Success! User was created.\nUser ID: %s\nName: %s\n",
-		user.ID, user.Name)
-
+	fmt.Println("User created successfully:")
+	printUser(user)
 	return nil
+}
+
+func printUser(user database.User) {
+	fmt.Printf(" * ID:      %v\n", user.ID)
+	fmt.Printf(" * Name:    %v\n", user.Name)
 }
