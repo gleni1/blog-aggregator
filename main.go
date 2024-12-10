@@ -2,40 +2,59 @@ package main
 
 import (
 	"blog/internal/config"
+	"blog/internal/database"
+	"database/sql"
 	"fmt"
 	"log"
+	_ "log"
 	"os"
+	_ "os"
+
+	_ "github.com/lib/pq"
 )
 
+type state struct {
+	config *config.Config
+	db     *database.Queries
+}
+
+const dbURL = "postgres://mariglenpoleshi:@localhost:5432/gator?sslmode=disable"
+
 func main() {
-	fmt.Println("HELLLO FROM MAIN")
-	configStruct := &config.Config{}
-
-	stateInstance := &config.State{
-		Config: configStruct,
+	cfg, err := config.Read()
+	if err != nil {
+		fmt.Println("couldn't read config file")
 	}
 
-	commands := &config.Commands{
-		Handlers: make(map[string]func(*config.State, config.Command) error),
+	// stateInstance.config.DbURL = dbURL
+	db, err := sql.Open("postgres", dbURL)
+	if err != nil {
+		log.Fatalf("error connecting to db: %v", err)
+	}
+	defer db.Close()
+	dbQueries := database.New(db)
+
+	programState := &state{
+		config: &cfg,
+		db:     dbQueries,
 	}
 
-	commands.Register("login", config.HandlerLogin)
+	cmds := commands{
+		Handlers: make(map[string]func(*state, command) error),
+	}
+	cmds.register("login", handlerLogin)
+	cmds.register("register", handleRegister)
+
 	if len(os.Args) < 2 {
-		log.Fatalf("Command name is required")
+		fmt.Println("Usage: cli <command> [args...] ")
 	}
 
 	cmdName := os.Args[1]
-	args := os.Args[2:]
+	cmdArgs := os.Args[2:]
 
-	cmd := config.Command{
-		Name: cmdName,
-		Args: args,
-	}
-
-	err := commands.Run(stateInstance, cmd)
+	err = cmds.run(programState, command{Name: cmdName, Args: cmdArgs})
 	if err != nil {
-		log.Fatalf("Error running command: %v", err)
+		log.Fatal(err)
 	}
 
-	configStruct.Read()
 }
