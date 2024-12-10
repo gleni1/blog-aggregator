@@ -10,6 +10,21 @@ import (
 	"github.com/google/uuid"
 )
 
+func handlerUsersList(s *state, cmd command) error {
+	users, err := s.db.Getusers(context.Background())
+	if err != nil {
+		return fmt.Errorf("Error fetching users from the database.")
+	}
+	for _, user := range users {
+		if user.Name == s.config.CurrentUserName {
+			fmt.Printf("* %v (current)\n", user.Name)
+			continue
+		}
+		fmt.Printf("* %v\n", user.Name)
+	}
+	return nil
+}
+
 func handleReset(s *state, cmd command) error {
 	err := s.db.ClearData(context.Background())
 	if err != nil {

@@ -45,6 +45,7 @@ func main() {
 	cmds.register("login", handlerLogin)
 	cmds.register("register", handleRegister)
 	cmds.register("reset", handleReset)
+	cmds.register("users", handlerUsersList)
 
 	if len(os.Args) < 2 {
 		fmt.Println("Usage: cli <command> [args...] ")
