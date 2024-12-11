@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/xml"
-	"fmt"
 	"html"
 	"io"
 	"net/http"
@@ -33,7 +32,7 @@ func fetchFeed(ctx context.Context, feedURL string) (*RSSFeed, error) {
 	// Create a new request
 	req, err := http.NewRequestWithContext(ctx, "GET", feedURL, nil)
 	if err != nil {
-		return nil, fmt.Errorf("Error creating request: %v", err)
+		return nil, err
 	}
 
 	// Set Header
@@ -42,21 +41,21 @@ func fetchFeed(ctx context.Context, feedURL string) (*RSSFeed, error) {
 	// Execute the request
 	response, err := httpClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("Error getting the response")
+		return nil, err
 	}
 	defer response.Body.Close()
 
 	// Read the response
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
-		return nil, fmt.Errorf("Error reading the response body data")
+		return nil, err
 	}
 
 	// Unmarshal XML:
 	var feed RSSFeed
 	err = xml.Unmarshal(body, &feed)
 	if err != nil {
-		return nil, fmt.Errorf("Error converting the response byte slice into a RSSFeed struct")
+		return nil, err
 	}
 
 	// Decode HTML entities
@@ -69,5 +68,4 @@ func fetchFeed(ctx context.Context, feedURL string) (*RSSFeed, error) {
 	}
 
 	return &feed, nil
-
 }
