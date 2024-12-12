@@ -20,3 +20,16 @@ ON users.id = feeds.user_id;
 SELECT feeds.ID, feeds.Name 
 FROM feeds 
 WHERE feeds.URL = $1;
+
+-- name: MarkFeedFetched :one
+UPDATE feeds
+SET last_fetched_at = NOW(), 
+updated_at = NOW() 
+WHERE feeds.id = $1
+RETURNING *;
+
+-- name: GetNextFeedToFetch :one 
+SELECT * 
+FROM feeds
+ORDER BY feeds.last_fetched_at NULLS FIRST
+LIMIT 1;

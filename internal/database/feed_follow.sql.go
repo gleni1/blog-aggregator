@@ -135,11 +135,11 @@ func (q *Queries) GetFeedFollowsForUser(ctx context.Context, userID uuid.UUID) (
 const getFeedID = `-- name: GetFeedID :one
 
 SELECT id from feeds 
-WHERE feeds.name = $1
+WHERE feeds.url = $1
 `
 
-func (q *Queries) GetFeedID(ctx context.Context, name string) (uuid.UUID, error) {
-	row := q.db.QueryRowContext(ctx, getFeedID, name)
+func (q *Queries) GetFeedID(ctx context.Context, url string) (uuid.UUID, error) {
+	row := q.db.QueryRowContext(ctx, getFeedID, url)
 	var id uuid.UUID
 	err := row.Scan(&id)
 	return id, err

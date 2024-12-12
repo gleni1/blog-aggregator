@@ -23,7 +23,7 @@ WHERE feed_follows.user_id = $1;
 
 -- name: GetFeedID :one
 SELECT id from feeds 
-WHERE feeds.name = $1;
+WHERE feeds.url = $1;
 
 -- name: DeleteFeed :exec
 DELETE FROM feed_follows
