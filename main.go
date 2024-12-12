@@ -53,6 +53,7 @@ func main() {
   cmds.register("feeds", handlerFeedList)
   cmds.register("follow", middlewareLoggedIn(handlerFeedFollow))
   cmds.register("following", middlewareLoggedIn(handlerFeedFollowsForUser))
+  cmds.register("unfollow", middlewareLoggedIn(handlerFeedUnfollow))
 
 	if len(os.Args) < 2 {
 		fmt.Println("Usage: cli <command> [args...] ")
