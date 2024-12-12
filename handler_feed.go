@@ -9,18 +9,9 @@ import (
 	"github.com/google/uuid"
 )
 
-func handlerFeedFollowsForUser(s *state, cmd command) error {
-  // Check if user has provided the name in the arguments
-  if len(cmd.Args) < 1 {
-    return fmt.Errorf("Not enough arguments. Need to provide use name as well.")
-  }
-  userName := cmd.Args[0]
-  
+func handlerFeedFollowsForUser(s *state, cmd command, user database.User) error {
   // Get user data from the databse based on the name provided in args 
-  user, err := s.db.GetUser(context.Background(), userName)
-  if err != nil {
-    return fmt.Errorf("Error getting user from db")
-  }
+  userName := s.config.CurrentUserName 
   userId := user.ID
   
   // Get follows for user based on user ID
@@ -37,12 +28,7 @@ func handlerFeedFollowsForUser(s *state, cmd command) error {
   return nil
 }
 
-func handlerFeedFollow(s *state, cmd command) error {
-	user, err := s.db.GetUser(context.Background(), s.config.CurrentUserName)
-  if err != nil {
-    return fmt.Errorf("Error retrieving user")
-  }
-
+func handlerFeedFollow(s *state, cmd command, user database.User) error {
   if len(cmd.Args) != 1 {
     return fmt.Errorf("usage: %s <feed_url>", cmd.Name)
   }
@@ -93,12 +79,7 @@ func handlerFeedList(s *state, cmd command) error {
 }
 
 
-func handlerFeed(s *state, cmd command) error {
-	user, err := s.db.GetUser(context.Background(), s.config.CurrentUserName)
-	if err != nil {
-		return err
-	}
-
+func handlerFeed(s *state, cmd command, user database.User) error {
 	if len(cmd.Args) != 2 {
 		return fmt.Errorf("There need to be at least 2 args")
 	}

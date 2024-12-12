@@ -4,7 +4,8 @@ import (
 	"blog/internal/config"
 	"blog/internal/database"
 	"database/sql"
-	"fmt"
+	"context"
+  "fmt"
 	"log"
 	_ "log"
 	"os"
@@ -48,10 +49,10 @@ func main() {
 	cmds.register("reset", handleReset)
 	cmds.register("users", handlerUsersList)
 	cmds.register("agg", handlerAgg)
-	cmds.register("addfeed", handlerFeed)
+	cmds.register("addfeed", middlewareLoggedIn(handlerFeed))
   cmds.register("feeds", handlerFeedList)
-  cmds.register("follow", handlerFeedFollow)
-  cmds.register("following", handlerFeedFollowsForUser)
+  cmds.register("follow", middlewareLoggedIn(handlerFeedFollow))
+  cmds.register("following", middlewareLoggedIn(handlerFeedFollowsForUser))
 
 	if len(os.Args) < 2 {
 		fmt.Println("Usage: cli <command> [args...] ")
@@ -65,4 +66,14 @@ func main() {
 		log.Fatal(err)
 	}
 
+}
+
+func middlewareLoggedIn(handler func(s *state, cmd command, user database.User) error) func(*state, command) error {
+  return func(s *state, cmd command) error {
+    user, err := s.db.GetUser(context.Background(), s.config.CurrentUserName)
+    if err != nil {
+      return err 
+    }
+    return handler(s, cmd, user)
+  }
 }
