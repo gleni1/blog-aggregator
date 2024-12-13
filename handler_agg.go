@@ -6,6 +6,8 @@ import (
   "time"
   "log"
 	"blog/internal/database"
+	"github.com/google/uuid"
+	"database/sql"
 )
 
 func handlerAgg(s *state, cmd command) error {
@@ -47,7 +49,39 @@ func scrapeFeed(db *database.Queries, feed database.Feed) {
     return
   }
   for _, item := range feedData.Channel.Item {
-    fmt.Printf("Found post: %s\n", item.Title)
+    //fmt.Printf("Found post: %s\n", item.Title)
+    err = storePosts(db, item, feed.ID)
+    if err != nil {
+      log.Printf("Error storing post: %w", err)
+    }
   }
   log.Printf("Feed %s collected, %v posts found", feed.Name, len(feedData.Channel.Item))
+}
+
+
+func storePosts(db *database.Queries, item RSSItem, feedID uuid.UUID) error {
+  layout := "Mon, 02 Jan 2006 15:04:05 -0700"
+  parsedTime, err := time.Parse(layout, item.PubDate)
+  if err != nil {
+    return fmt.Errorf("Error parsing time in the right format: %w", err)
+  }
+  postParams := database.CreatePostParams {
+    ID:           uuid.New(),
+    CreatedAt:    time.Now().UTC(),
+    UpdatedAt:    time.Now().UTC(),
+    Title:        item.Title,
+    Url:          sql.NullString{
+      String:   item.Link,
+      Valid:    true,
+    },
+    Description:  item.Description,
+    PublishedAt:  parsedTime, 
+    FeedID:       feedID, 
+  }
+  post, err := db.CreatePost(context.Background(), postParams)
+  if err != nil {
+    return fmt.Errorf("Error storing post: %w", err)
+  }
+  fmt.Printf("Success storing post with title: %s\n", post.Title)
+  return nil
 }
